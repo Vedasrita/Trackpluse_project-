@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TrackPulse — Live Train Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0C0D11;
+    --panel: #1E1F25;
+    --panel-2: #25262E;
+    --line: rgba(255,255,255,0.08);
+    --text: #FFFFFF;
+    --muted: #A0A5B5;
+    --muted-2: #6B7080;
+    --signal: #FF7A00;
+    --signal-dim: #FF7A0026;
+    --live: #33d6b8;
+    --live-dim: #33d6b81f;
+    --alert: #ff5470;
+    --alert-dim: #ff547026;
+    --ok: #33d6b8;
+    --gap: 16px;
+    --radius: 22px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+  body{
+    min-height:100vh;
+    background-image:
+      radial-gradient(circle at 15% 0%, #ffffff08, transparent 40%),
+      radial-gradient(circle at 90% 10%, #FF7A0014, transparent 35%);
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; letter-spacing:0.02em; }
+  .display{ font-family:'Poppins', sans-serif; font-weight:700; }
+  .glass{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .btn-cta{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    background: var(--signal); color:#0C0D11; font-weight:700; font-size:13.5px;
+    padding:13px 18px; border-radius:16px; border:none; cursor:pointer;
+    box-shadow: 0 8px 22px -8px #FF7A0088;
+    font-family:'Inter';
+  }
+  .btn-cta:active{ transform: scale(.97); }
+
+  /* shell */
+  .shell{
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    padding-bottom: 88px;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+  }
+
+  /* header */
+  .topbar{
+    position: sticky; top:0; z-index: 40;
+    background: linear-gradient(180deg, #0C0D11 70%, #0C0D11cc);
+    backdrop-filter: blur(10px);
+    padding: 18px 18px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .brand{ display:flex; align-items:center; justify-content:space-between; }
+  .brand-left{ display:flex; align-items:center; gap:10px; }
+  .logo{
+    width:34px; height:34px; border-radius:9px;
+    background: linear-gradient(135deg, var(--signal), #FF9A3D);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 0 18px #FF7A0055;
+  }
+  .logo svg{ width:19px; height:19px; }
+  .brand-name{ font-size:20px; letter-spacing:0.01em; }
+  .brand-sub{ font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.14em; margin-top:1px; }
+  .pulse-live{
+    display:flex; align-items:center; gap:6px;
+    font-size:11px; color:var(--live); background:var(--live-dim);
+    padding:6px 10px; border-radius:999px; border:1px solid #33d6b840;
+  }
+  .dot-blink{ width:6px; height:6px; border-radius:50%; background:var(--live); animation: blink 1.6s infinite; }
+  @keyframes blink{ 0%,100%{opacity:1; box-shadow:0 0 0 0 #33d6b855;} 50%{opacity:.4;} }
+
+  /* pulse waveform signature */
+  .waveform{ width:100%; height:46px; margin-top:14px; overflow:hidden; }
+  .waveform svg{ width:200%; height:100%; animation: scrollwave 5.5s linear infinite; }
+  @keyframes scrollwave{ from{ transform: translateX(0); } to{ transform: translateX(-50%); } }
+
+  /* front-page hero: logo + clock */
+  .hero-front{
+    position:relative; margin: 14px 18px 0; padding: 22px 16px 14px;
+    background: linear-gradient(160deg, var(--panel), #0c1526);
+    border:1px solid var(--line); border-radius:22px; overflow:hidden;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .hero-front-glow{
+    position:absolute; width:220px; height:220px; border-radius:50%;
+    background: radial-gradient(circle, #FF7A0022, transparent 70%);
+    top:-90px; left:-60px; pointer-events:none;
+  }
+  .hero-train-logo{ width:112px; height:auto; flex-shrink:0; position:relative; z-index:1; }
+  #heroTrainBody{ animation: chug 2.6s ease-in-out infinite; transform-origin: center; }
+  @keyframes chug{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-1.5px);} }
+  .hero-clock-wrap{ position:relative; z-index:1; text-align:right; }
+  .hero-clock{ font-size:27px; font-weight:600; color:var(--text); letter-spacing:0.02em; line-height:1; }
+  .hero-date{ font-size:12px; color:var(--muted); margin-top:6px; }
+  .hero-tz{ font-size:10px; color:var(--muted-2); text-transform:uppercase; letter-spacing:.1em; margin-top:3px; }
+
+  /* search */
+  .search-wrap{ padding: 16px 18px 4px; }
+  .search-bar{
+    display:flex; align-items:center; gap:10px;
+    background: var(--panel); border:1px solid var(--line);
+    border-radius: 14px; padding: 13px 14px;
+  }
+  .search-bar input{
+    flex:1; background:transparent; border:none; outline:none;
+    color:var(--text); font-size:14.5px; font-family:'Inter';
+  }
+  .search-bar input::placeholder{ color: var(--muted-2); }
+  .search-bar svg{ width:17px; height:17px; color:var(--muted); flex-shrink:0; }
+
+  .chip-row{ display:flex; gap:8px; overflow-x:auto; padding: 12px 18px 2px; scrollbar-width:none; }
+  .chip-row::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex-shrink:0; font-size:12.5px; color:var(--text);
+    background: var(--panel-2); border:1px solid var(--line);
+    padding: 8px 13px; border-radius: 999px; white-space:nowrap; cursor:pointer;
+    transition: .15s;
+  }
+  .chip:active{ transform: scale(.96); }
+  .chip.active{ background: var(--signal-dim); border-color:#FF7A0066; color:var(--signal); }
+
+  /* section title */
+  .section-title{
+    display:flex; align-items:baseline; justify-content:space-between;
+    padding: 22px 18px 10px;
+  }
+  .section-title h2{ font-size: 13px; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); font-weight:600; }
+  .section-title span{ font-size:12px; color:var(--muted-2); cursor:pointer; }
+
+  .page{ display:none; animation: fadein .25s ease; }
+  .page.active{ display:block; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  /* result / train cards */
+  .list{ display:flex; flex-direction:column; gap:10px; padding: 0 18px; }
+  .train-card{
+    background: var(--panel); border:1px solid var(--line); border-radius: var(--radius);
+    padding:14px; cursor:pointer; transition:.15s;
+  }
+  .train-card:active{ transform: scale(.985); }
+  .tc-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .tc-tag{ font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:7px; letter-spacing:.03em; }
+  .tag-vb{ background:#FF7A0026; color:#ffab5c; }
+  .tag-raj{ background:#ff547026; color:#ff8fa3; }
+  .tag-dur{ background:#33d6b826; color:#5fe8cf; }
+  .tag-sht{ background:#7c9bff26; color:#a9bfff; }
+  .tc-num{ font-size:11.5px; color:var(--muted); font-family:'JetBrains Mono'; }
+  .tc-name{ font-size:16.5px; font-weight:700; margin-bottom:6px; font-family:'Poppins'; }
+  .tc-route{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); margin-bottom:10px; }
+  .tc-route b{ color:var(--text); font-weight:600; }
+  .tc-arrow{ color:var(--muted-2); }
+  .tc-bottom{ display:flex; align-items:center; justify-content:space-between; }
+  .status-pill{ display:flex; align-items:center; gap:5px; font-size:11.5px; padding:5px 9px; border-radius:8px; font-weight:600; }
+  .pill-ontime{ background: var(--live-dim); color:var(--live); }
+  .pill-late{ background: var(--alert-dim); color:var(--alert); }
+  .fare-mini{ font-size:12px; color:var(--muted); }
+  .fare-mini b{ color:var(--text); }
+
+  /* congestion */
+  .congestion-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:18px;
+    padding:13px 14px; margin: 0 18px 10px;
+  }
+  .cg-top{ display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px; }
+  .cg-top b{ font-weight:600; }
+  .cg-track{ height:6px; border-radius:99px; background:#1a2947; overflow:hidden; }
+  .cg-fill{ height:100%; border-radius:99px; }
+  .cg-meta{ display:flex; justify-content:space-between; margin-top:6px; font-size:11px; color:var(--muted-2); }
+
+  /* live page — boarding-pass style glass card over a stylized geo-map */
+  .hero-card{
+    margin: 12px 18px 0; position:relative; overflow:hidden;
+    border:1px solid var(--line); border-radius: 24px; padding:18px;
+    background:
+      linear-gradient(160deg, rgba(30,31,37,0.82), rgba(20,24,22,0.88)),
+      radial-gradient(circle at 20% 15%, #1c3d2c 0%, transparent 45%),
+      radial-gradient(circle at 85% 0%, #16321f 0%, transparent 40%),
+      repeating-radial-gradient(circle at 50% 40%, #1a3a2822 0px, #1a3a2822 2px, transparent 3px, transparent 22px),
+      #10130f;
+    backdrop-filter: blur(18px);
+  }
+  .hero-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; position:relative; z-index:1; }
+  .hero-route{ font-size: 12.5px; color:var(--muted); margin-top:2px; }
+  .hero-route b{ color:var(--text); }
+  .hero-days{ font-size:11px; color:var(--muted-2); margin-top:5px; }
+
+  .gauge-row{ display:flex; align-items:center; gap:16px; margin: 16px 0 6px; }
+  .gauge{ position:relative; width:118px; height:70px; flex-shrink:0; }
+  .gauge svg{ width:100%; height:100%; }
+  .gauge-val{ position:absolute; bottom:2px; left:0; right:0; text-align:center; }
+  .gauge-val .n{ font-size:26px; font-weight:700; font-family:'Poppins'; line-height:1; }
+  .gauge-val .u{ font-size:10px; color:var(--muted); }
+  .stat-mini-grid{ flex:1; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .stat-mini{ }
+  .stat-mini .l{ font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted-2); margin-bottom:3px; }
+  .stat-mini .v{ font-size:14.5px; font-weight:600; font-family:'Poppins'; }
+
+  /* schematic track map */
+  .track-map{
+    margin: 14px 18px; background:var(--panel); border:1px solid var(--line);
+    border-radius:20px; padding:16px 14px 10px;
+  }
+  .tm-head{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:12px; }
+  .tm-head b{ color: var(--live); font-weight:600; }
+  .track-svg{ width:100%; height:80px; overflow:visible; }
+  .station-label{ font-size:9.5px; fill:var(--muted-2); font-family:'JetBrains Mono'; }
+  .station-label.on{ fill: var(--text); font-weight:600; }
+
+  .diag-card{
+    margin: 0 18px 14px; background:var(--panel); border:1px solid var(--line);
+    border-radius:20px; padding:14px;
+  }
+  .diag-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .diag-top .t{ display:flex; align-items:center; gap:7px; font-size:13px; font-weight:600; }
+  .acc-badge{ font-size:10.5px; background:var(--live-dim); color:var(--live); padding:4px 8px; border-radius:7px; font-weight:600; }
+  .diag-text{ font-size:12.5px; color:var(--muted); line-height:1.5; margin-bottom:10px; }
+  .slack-chip{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; background:var(--live-dim); color:var(--live); padding:5px 10px; border-radius:8px; font-weight:600; }
+
+  .weather-source{ margin: 0 18px 8px; font-size:10.5px; color:var(--muted-2); }
+  .weather-row{ display:flex; gap:10px; margin:0 18px 14px; }
+  .weather-card{ flex:1; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:12px; text-align:center; }
+  .weather-card .l{ font-size:10px; color:var(--muted-2); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+  .weather-card .v{ font-size:15px; font-weight:700; font-family:'Poppins'; }
+  .weather-card .sub{ font-size:10.5px; color:var(--muted); margin-top:2px; }
+
+  .stations-table{ margin: 0 18px 20px; background:var(--panel); border:1px solid var(--line); border-radius:20px; overflow:hidden; }
+  .st-row{ display:flex; align-items:center; padding:11px 14px; border-bottom:1px solid var(--line); font-size:12.5px; gap:10px; }
+  .st-row:last-child{ border-bottom:none; }
+  .st-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--muted-2); }
+  .st-row.passed .st-dot{ background: var(--live); }
+  .st-row.current .st-dot{ background: var(--signal); box-shadow:0 0 0 4px var(--signal-dim); }
+  .st-name{ flex:1; }
+  .st-row.passed .st-name{ color:var(--muted); }
+  .st-eta{ font-family:'JetBrains Mono'; font-size:11.5px; color:var(--muted); }
+  .st-row.current .st-eta{ color:var(--signal); font-weight:600; }
+
+  /* coach layout */
+  .coach-row{ display:flex; gap:6px; padding: 0 18px 20px; overflow-x:auto; scrollbar-width:none; }
+  .coach-row::-webkit-scrollbar{display:none;}
+  .coach{
+    flex-shrink:0; width:46px; height:38px; border-radius:8px; background:var(--panel-2);
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:10.5px; font-family:'JetBrains Mono'; color:var(--muted);
+  }
+  .coach.eng{ background: var(--signal-dim); color:var(--signal); border-color:#FF7A0055; }
+  .coach.ac{ background: #7c9bff1f; color:#a9bfff; border-color:#7c9bff40; }
+
+  /* schedule page */
+  .sched-card{ background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:14px; margin-bottom:10px; }
+  .sched-top{ display:flex; justify-content:space-between; align-items:center; }
+  .sched-time{ text-align:center; }
+  .sched-time .t{ font-size:19px; font-weight:700; font-family:'Poppins'; }
+  .sched-time .s{ font-size:10px; color:var(--muted-2); margin-top:1px; }
+  .sched-mid{ flex:1; text-align:center; padding:0 10px; }
+  .sched-dur{ font-size:10.5px; color:var(--muted-2); margin-bottom:4px; }
+  .sched-line{ height:1px; background:var(--line); position:relative; }
+  .sched-line::after{ content:'●'; position:absolute; right:0; top:-5px; font-size:8px; color:var(--muted-2); }
+  .sched-days{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); font-size:11.5px; color:var(--muted); display:flex; justify-content:space-between; }
+
+  /* fare page */
+  .fare-form{ padding: 4px 18px 0; display:flex; flex-direction:column; gap:12px; }
+  .field label{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted-2); display:block; margin-bottom:6px; }
+  .select-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:12px 13px; font-size:14px; color:var(--text); width:100%;
+    appearance:none; font-family:'Inter';
+  }
+  .class-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .class-opt{
+    text-align:center; padding:10px 4px; border-radius:16px; background:var(--panel);
+    border:1px solid var(--line); font-size:12px; cursor:pointer; transition:.15s;
+  }
+  .class-opt b{ display:block; font-size:14px; margin-top:2px; font-family:'Poppins'; }
+  .class-opt.sel{ border-color:#FF7A0088; background:var(--signal-dim); color:var(--signal); }
+  .stepper{ display:flex; align-items:center; justify-content:space-between; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px 14px; }
+  .stepper button{ width:32px; height:32px; border-radius:9px; border:1px solid var(--line); background:var(--panel-2); color:var(--text); font-size:17px; }
+  .fare-result{ margin-top:6px; background:linear-gradient(135deg,var(--panel-2),var(--panel)); border:1px solid #FF7A0044; border-radius:20px; padding:18px; text-align:center; }
+  .fare-result .l{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; }
+  .fare-result .amt{ font-size:38px; font-weight:700; font-family:'Poppins'; color:var(--signal); margin:6px 0 2px; }
+  .fare-result .brk{ font-size:11.5px; color:var(--muted-2); }
+
+  /* bottom nav */
+  .bottomnav{
+    position: fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:480px; background:#0a1120e8; backdrop-filter: blur(14px);
+    border-top:1px solid var(--line); display:flex; z-index:50;
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+  .nav-btn{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:none; border:none; color:var(--muted-2); font-size:10px; padding:6px 2px;
+    font-family:'Inter'; cursor:pointer;
+  }
+  .nav-btn svg{ width:20px; height:20px; }
+  .nav-btn.active{ color: var(--signal); }
+  .nav-btn.active svg{ filter: drop-shadow(0 0 6px #FF7A0077); }
+
+  ::-webkit-scrollbar{ width:0; height:0; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-left">
+        <div class="logo">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 15V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3Z" stroke="#0C0D11" stroke-width="2"/><path d="M4 18l-2 3M20 18l2 3M8 21h8" stroke="#0C0D11" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="15" r="1.2" fill="#0C0D11"/><circle cx="16" cy="15" r="1.2" fill="#0C0D11"/></svg>
+        </div>
+        <div>
+          <div class="brand-name display">TrackPulse</div>
+          <div class="brand-sub">Live rail intelligence</div>
+        </div>
+      </div>
+      <div class="pulse-live"><span class="dot-blink"></span>LIVE</div>
+    </div>
+    <div class="waveform">
+      <svg viewBox="0 0 600 46" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="wg" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#33d6b8" stop-opacity="0"/>
+            <stop offset="50%" stop-color="#33d6b8" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#33d6b8" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,23 L40,23 L52,23 L60,6 L68,40 L76,23 L90,23 L300,23 L312,23 L320,6 L328,40 L336,23 L350,23 L600,23" fill="none" stroke="url(#wg)" stroke-width="1.6"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ============ PAGE: SEARCH ============ -->
+  <div class="page active" id="page-search">
+
+    <div class="hero-front">
+      <div class="hero-front-glow"></div>
+      <svg class="hero-train-logo" viewBox="0 0 200 120" fill="none">
+        <ellipse cx="100" cy="104" rx="88" ry="5" fill="#000" opacity="0.35"/>
+        <rect x="18" y="94" width="164" height="6" fill="#1c2a44"/>
+        <line x1="18" y1="100" x2="182" y2="100" stroke="#33d6b8" stroke-width="1" stroke-dasharray="2 6" opacity="0.6"/>
+        <g id="heroTrainBody">
+          <rect x="30" y="42" width="140" height="46" rx="14" fill="url(#bodyGrad)"/>
+          <rect x="30" y="42" width="140" height="14" rx="7" fill="#ffffff12"/>
+          <rect x="44" y="54" width="20" height="16" rx="3" fill="#0C0D11" opacity="0.85"/>
+          <rect x="70" y="54" width="20" height="16" rx="3" fill="#0C0D11" opacity="0.85"/>
+          <rect x="96" y="54" width="20" height="16" rx="3" fill="#0C0D11" opacity="0.85"/>
+          <rect x="122" y="54" width="20" height="16" rx="3" fill="#0C0D11" opacity="0.85"/>
+          <circle cx="150" cy="63" r="9" fill="#0C0D11" opacity="0.9"/>
+          <circle cx="150" cy="63" r="4" fill="#FF7A00"/>
+          <circle cx="52" cy="92" r="9" fill="#0e1729" stroke="#33d6b8" stroke-width="2.5"/>
+          <circle cx="90" cy="92" r="9" fill="#0e1729" stroke="#33d6b8" stroke-width="2.5"/>
+          <circle cx="128" cy="92" r="9" fill="#0e1729" stroke="#33d6b8" stroke-width="2.5"/>
+          <circle cx="158" cy="92" r="9" fill="#0e1729" stroke="#33d6b8" stroke-width="2.5"/>
+        </g>
+        <defs>
+          <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FF9A3D"/>
+            <stop offset="100%" stop-color="#FF7A00"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="hero-clock-wrap">
+        <div class="hero-clock mono" id="heroClock">00:00:00</div>
+        <div class="hero-date" id="heroDate">—</div>
+        <div class="hero-tz">IST · India Standard Time</div>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="searchInput" placeholder="Search train number or name — e.g. 22436, Rajdhani" oninput="renderSearch()">
+      </div>
+    </div>
+    <div class="chip-row" id="chipRow"></div>
+
+    <div class="section-title"><h2>Busiest Routes Right Now</h2></div>
+    <div id="congestionList"></div>
+
+    <div class="section-title"><h2>Live Active Trains</h2><span onclick="go('live')">View tracking →</span></div>
+    <div class="list" id="searchResults"></div>
+    <div style="height:14px;"></div>
+  </div>
+
+  <!-- ============ PAGE: LIVE ============ -->
+  <div class="page" id="page-live">
+    <div class="hero-card">
+      <div class="hero-top">
+        <div>
+          <span class="tc-tag" id="liveTag">Vande Bharat</span>
+          <div class="tc-name display" id="liveName" style="margin-top:8px;">Howrah Rajdhani Express</div>
+          <div class="hero-route" id="liveRoute"><b>NDLS</b> → <b>HWH</b> · 1451 km</div>
+          <div class="hero-days" id="liveDays">Runs all days except Fri</div>
+        </div>
+        <div class="status-pill pill-ontime" id="liveStatusPill">On time</div>
+      </div>
+
+      <div class="gauge-row">
+        <div class="gauge">
+          <svg viewBox="0 0 118 70">
+            <path d="M9,66 A50,50 0 0 1 109,66" fill="none" stroke="#1a2947" stroke-width="9" stroke-linecap="round"/>
+            <path id="speedArc" d="M9,66 A50,50 0 0 1 109,66" fill="none" stroke="#FF7A00" stroke-width="9" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="157"/>
+          </svg>
+          <div class="gauge-val"><div class="n mono" id="speedVal">0</div><div class="u">km/h · max <span id="maxSpeed">130</span></div></div>
+        </div>
+        <div class="stat-mini-grid">
+          <div class="stat-mini"><div class="l">To next halt</div><div class="v" id="distNext">— km</div></div>
+          <div class="stat-mini"><div class="l">Delay</div><div class="v" id="delayVal" style="color:var(--live)">On time</div></div>
+          <div class="stat-mini"><div class="l">Block section</div><div class="v" id="blockSection" style="font-size:12px;">—</div></div>
+          <div class="stat-mini"><div class="l">Track status</div><div class="v" style="color:var(--live); font-size:12.5px;">Green · Clear</div></div>
+        </div>
+      </div>
+      <button class="btn-cta" style="width:100%; margin-top:14px; position:relative; z-index:1;" onclick="document.getElementById('trackSvg').scrollIntoView({behavior:'smooth', block:'center'}); loadLiveWeather(currentTrain);">See train on map</button>
+    </div>
+
+    <div class="track-map">
+      <div class="tm-head"><span>Sectional position</span><b id="tmPct">0%</b> of route</div>
+      <svg class="track-svg" viewBox="0 0 400 80" id="trackSvg">
+        <line x1="15" y1="40" x2="385" y2="40" stroke="#1c2a44" stroke-width="3" stroke-dasharray="1 7" stroke-linecap="round"/>
+        <line id="progressLine" x1="15" y1="40" x2="15" y2="40" stroke="#33d6b8" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="15" cy="40" r="5" fill="#7d8bad"/>
+        <circle cx="385" cy="40" r="5" fill="#7d8bad"/>
+        <g id="trainMarker">
+          <circle r="9" fill="#FF7A0022"/>
+          <circle r="5" fill="#FF7A00"/>
+        </g>
+        <text x="15" y="62" class="station-label on" text-anchor="middle" id="mapOrigin">NDLS</text>
+        <text x="385" y="62" class="station-label on" text-anchor="middle" id="mapDest">HWH</text>
+      </svg>
+    </div>
+
+    <div class="diag-card">
+      <div class="diag-top"><div class="t">🛰️ AI Delay Diagnostics</div><span class="acc-badge">98% accuracy</span></div>
+      <div class="diag-text" id="diagText">Train running on schedule with optimal block headway. High probability of on-time arrival.</div>
+      <span class="slack-chip" id="slackChip">+18m slack recovery</span>
+    </div>
+
+    <div class="weather-source" id="weatherSource">📡 Live weather at current position · Open-Meteo</div>
+    <div class="weather-row">
+      <div class="weather-card"><div class="l">Weather</div><div class="v" id="wxIcon">☀️</div><div class="sub" id="wxDesc">Clear track</div></div>
+      <div class="weather-card"><div class="l">Humidity</div><div class="v" id="wxHum">54%</div><div class="sub">Moderate</div></div>
+      <div class="weather-card"><div class="l">Precipitation</div><div class="v" id="wxRain">0 mm</div><div class="sub">No precipitation</div></div>
+    </div>
+
+    <div class="section-title"><h2>Coach layout</h2></div>
+    <div class="coach-row" id="coachRow"></div>
+
+    <div class="section-title"><h2>Upcoming stations</h2></div>
+    <div class="stations-table" id="stationsTable"></div>
+  </div>
+
+  <!-- ============ PAGE: SCHEDULE ============ -->
+  <div class="page" id="page-schedule">
+    <div class="section-title" style="padding-top:16px;"><h2>All train schedules</h2></div>
+    <div class="list" id="scheduleList" style="padding-bottom:20px;"></div>
+  </div>
+
+  <!-- ============ PAGE: FARE ============ -->
+  <div class="page" id="page-fare">
+    <div class="section-title" style="padding-top:16px;"><h2>Fare estimator</h2></div>
+    <div class="fare-form">
+      <div class="field">
+        <label>Train</label>
+        <select class="select-box" id="fareTrainSelect" onchange="updateFare()"></select>
+      </div>
+      <div class="field">
+        <label>Class</label>
+        <div class="class-grid" id="classGrid"></div>
+      </div>
+      <div class="field">
+        <label>Passengers</label>
+        <div class="stepper">
+          <button onclick="changePax(-1)">−</button>
+          <span class="mono" id="paxCount" style="font-size:16px;">1</span>
+          <button onclick="changePax(1)">+</button>
+        </div>
+      </div>
+      <div class="fare-result">
+        <div class="l">Estimated total fare</div>
+        <div class="amt" id="fareAmt">₹0</div>
+        <div class="brk" id="fareBrk">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottomnav">
+    <button class="nav-btn active" data-p="search" onclick="go('search')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      Search
+    </button>
+    <button class="nav-btn" data-p="live" onclick="go('live')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M4.9 4.9a10 10 0 0 0 0 14.1M19.1 4.9a10 10 0 0 1 0 14.1M8 8a5 5 0 0 0 0 8M16 8a5 5 0 0 1 0 8"/></svg>
+      Live ETA
+    </button>
+    <button class="nav-btn" data-p="schedule" onclick="go('schedule')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+      Schedule
+    </button>
+    <button class="nav-btn" data-p="fare" onclick="go('fare')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Fare
+    </button>
+  </div>
+</div>
+
+<script>
+/* ================= MOCK DATA ================= */
+const TRAINS = [
+  { num:"22436", name:"Vande Bharat Express", type:"vb", tag:"Vande Bharat", from:"NDLS", fromName:"New Delhi", to:"BSB", toName:"Varanasi Jn", dist:759, dep:"06:00", arr:"14:00", days:"Runs all days except Tue", maxSpeed:130, baseFare:{ CC:1195, EC:2260 } },
+  { num:"12302", name:"Howrah Rajdhani Express", type:"raj", tag:"Rajdhani", from:"NDLS", fromName:"New Delhi", to:"HWH", toName:"Howrah Jn", dist:1451, dep:"16:55", arr:"10:05", days:"Runs all days except Fri", maxSpeed:130, baseFare:{ SL:820, "3A":2150, "2A":3080, "1A":5210 } },
+  { num:"12951", name:"Mumbai Rajdhani Express", type:"raj", tag:"Rajdhani", from:"NDLS", fromName:"New Delhi", to:"BCT", toName:"Mumbai Central", dist:1384, dep:"16:25", arr:"08:35", days:"Runs daily", maxSpeed:140, baseFare:{ SL:795, "3A":2080, "2A":2960, "1A":4990 } },
+  { num:"12259", name:"Sealdah Duronto Express", type:"dur", tag:"Duronto", from:"NDLS", fromName:"New Delhi", to:"SDAH", toName:"Sealdah", dist:1447, dep:"22:35", arr:"22:00", days:"Runs Mon, Wed, Fri, Sat", maxSpeed:130, baseFare:{ SL:770, "3A":1990, "2A":2870 } },
+  { num:"12002", name:"Bhopal Shatabdi Express", type:"sht", tag:"Shatabdi", from:"NDLS", fromName:"New Delhi", to:"BPL", toName:"Bhopal Jn", dist:707, dep:"06:15", arr:"13:50", days:"Runs all days except Sun", maxSpeed:150, baseFare:{ CC:1080, EC:2040 } },
+  { num:"12622", name:"Tamil Nadu Express", type:"dur", tag:"Superfast", from:"NDLS", fromName:"New Delhi", to:"MAS", toName:"Chennai Central", dist:2194, dep:"22:30", arr:"07:15", days:"Runs daily", maxSpeed:120, baseFare:{ SL:920, "3A":2480, "2A":3560 } },
+  { num:"20502", name:"Rani Kamalapati Vande Bharat", type:"vb", tag:"Vande Bharat", from:"NDLS", fromName:"New Delhi", to:"RKMP", toName:"Rani Kamalapati", dist:701, dep:"05:40", arr:"13:20", days:"Runs all days except Wed", maxSpeed:160, baseFare:{ CC:1150, EC:2190 } },
+  { num:"12430", name:"Nizamuddin Rajdhani", type:"raj", tag:"Rajdhani", from:"NZM", fromName:"H Nizamuddin", to:"SC", toName:"Secunderabad", dist:1671, dep:"20:05", arr:"21:35", days:"Runs Mon, Thu, Sat", maxSpeed:130, baseFare:{ SL:850, "3A":2240, "2A":3210, "1A":5420 } },
+];
+
+const STATIONS_BY_TYPE = {
+  base: ["Origin", "Jn Alpha", "Central Halt", "Mid Junction", "River Crossing", "Cantt", "City East", "Destination"]
+};
+
+// simulated live snapshot per train (speed, delay, progress %, congestion, weather)
+function seedLive(t, seedOffset){
+  const hash = [...t.num].reduce((a,c)=>a+c.charCodeAt(0),0) + seedOffset;
+  const rand = (min,max,salt=0)=> min + ((Math.sin(hash*13.37+salt)+1)/2)*(max-min);
+  return {
+    speed: Math.round(rand(70, t.maxSpeed-8, 1)),
+    delayMin: Math.round(rand(-2, 22, 2)),
+    progress: rand(0.12, 0.86, 3),
+    congestion: Math.round(rand(28, 88, 4)),
+    humidity: Math.round(rand(38, 78, 5)),
+    rain: Math.round(rand(2, 55, 6)),
+    weather: rand(0,1,7) > 0.7 ? "🌧️" : rand(0,1,8) > 0.5 ? "⛅" : "☀️",
+    weatherDesc: rand(0,1,7) > 0.7 ? "Light rain ahead" : rand(0,1,8) > 0.5 ? "Partly cloudy" : "Clear track",
+    aheadGap: (rand(2,9,9)).toFixed(1),
+    block: "Section " + (Math.floor(rand(1,9,10))) + " – Down Line"
+  };
+}
+TRAINS.forEach((t,i)=> t.live = seedLive(t,i));
+
+// approximate real coordinates for the stations used above (for live clock + real weather lookup)
+const STATION_COORDS = {
+  NDLS:[28.6448,77.2167], NZM:[28.5877,77.2507], HWH:[22.5851,88.3468], BSB:[25.3176,82.9739],
+  BCT:[18.9696,72.8194], SDAH:[22.5726,88.3639], BPL:[23.2599,77.4126], RKMP:[23.2408,77.4525],
+  MAS:[13.0827,80.2707], SC:[17.4399,78.5011]
+};
+
+let currentTrain = TRAINS[1]; // default: Howrah Rajdhani, matches screenshots
+let currentPage = 'search';
+let paxCount = 1;
+let selectedClass = null;
+
+/* ================= LIVE CLOCK (real time, IST) ================= */
+function tickClock(){
+  const now = new Date();
+  const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const hh = String(ist.getHours()).padStart(2,'0');
+  const mm = String(ist.getMinutes()).padStart(2,'0');
+  const ss = String(ist.getSeconds()).padStart(2,'0');
+  document.getElementById('heroClock').textContent = `${hh}:${mm}:${ss}`;
+  document.getElementById('heroDate').textContent = ist.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+tickClock();
+setInterval(tickClock, 1000);
+
+/* ================= REAL WEATHER (Open-Meteo, no API key required) ================= */
+const weatherCache = {};
+function weatherCodeInfo(code){
+  if(code===0) return { icon:'☀️', desc:'Clear sky' };
+  if([1,2].includes(code)) return { icon:'🌤️', desc:'Mostly clear' };
+  if(code===3) return { icon:'⛅', desc:'Overcast' };
+  if([45,48].includes(code)) return { icon:'🌫️', desc:'Fog' };
+  if([51,53,55,56,57].includes(code)) return { icon:'🌦️', desc:'Drizzle' };
+  if([61,63,65,66,67,80,81,82].includes(code)) return { icon:'🌧️', desc:'Rain' };
+  if([71,73,75,77,85,86].includes(code)) return { icon:'🌨️', desc:'Snow' };
+  if([95,96,99].includes(code)) return { icon:'⛈️', desc:'Thunderstorm' };
+  return { icon:'⛅', desc:'Variable' };
+}
+async function fetchRealWeather(lat, lon){
+  const key = lat.toFixed(2)+','+lon.toFixed(2);
+  if(weatherCache[key]) return weatherCache[key];
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code&timezone=Asia%2FKolkata`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('weather fetch failed');
+  const data = await res.json();
+  const out = {
+    temp: Math.round(data.current.temperature_2m),
+    humidity: Math.round(data.current.relative_humidity_2m),
+    precip: data.current.precipitation,
+    ...weatherCodeInfo(data.current.weather_code)
+  };
+  weatherCache[key] = out;
+  return out;
+}
+function lerp(a,b,f){ return a + (b-a)*f; }
+async function loadLiveWeather(t){
+  const L = t.live;
+  const from = STATION_COORDS[t.from], to = STATION_COORDS[t.to];
+  if(!from || !to) return; // no coords for this pair — keep simulated fallback
+  const lat = lerp(from[0], to[0], L.progress);
+  const lon = lerp(from[1], to[1], L.progress);
+  try{
+    const w = await fetchRealWeather(lat, lon);
+    if(currentTrain !== t) return; // train changed while fetching
+    document.getElementById('wxIcon').textContent = w.icon;
+    document.getElementById('wxDesc').textContent = `${w.desc} · ${w.temp}°C`;
+    document.getElementById('wxHum').textContent = w.humidity + '%';
+    document.getElementById('wxHum').nextElementSibling.textContent = w.humidity>70?'Humid':w.humidity>40?'Moderate':'Dry';
+    document.getElementById('wxRain').textContent = w.precip>0 ? w.precip.toFixed(1)+' mm' : '0 mm';
+    document.getElementById('wxRain').nextElementSibling.textContent = w.precip>0 ? 'Currently falling' : 'No precipitation';
+    const badge = document.querySelector('.weather-row');
+    if(badge && !badge.dataset.tagged){ badge.dataset.tagged='1'; }
+  }catch(e){
+    // network unavailable — simulated values already rendered as fallback
+  }
+}
+
+/* ================= NAV ================= */
+function go(p){
+  currentPage = p;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.toggle('active', el.dataset.p===p));
+  if(p==='live'){ renderLive(); loadLiveWeather(currentTrain); }
+  if(p==='schedule') renderSchedule();
+  if(p==='fare') renderFare();
+}
+
+/* ================= SEARCH PAGE ================= */
+const chips = ["Vande Bharat", "Rajdhani", "Duronto", "Shatabdi", "NDLS", "HWH"];
+document.getElementById('chipRow').innerHTML = chips.map(c=>`<div class="chip" onclick="filterChip('${c}')">${c}</div>`).join('');
+let activeChip = null;
+function filterChip(c){
+  activeChip = activeChip===c ? null : c;
+  document.querySelectorAll('.chip').forEach(el=>el.classList.toggle('active', el.textContent===activeChip));
+  renderSearch();
+}
+
+function tagClass(type){ return {vb:'tag-vb', raj:'tag-raj', dur:'tag-dur', sht:'tag-sht'}[type] || 'tag-dur'; }
+
+function renderSearch(){
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  let results = TRAINS.filter(t=>{
+    const matchesQ = !q || t.num.includes(q) || t.name.toLowerCase().includes(q) || t.from.toLowerCase().includes(q) || t.to.toLowerCase().includes(q);
+    const matchesChip = !activeChip || t.tag===activeChip || t.from===activeChip || t.to===activeChip;
+    return matchesQ && matchesChip;
+  });
+  document.getElementById('searchResults').innerHTML = results.map(t=>{
+    const late = t.live.delayMin > 5;
+    const cheapestClass = Object.keys(t.baseFare)[0];
+    return `<div class="train-card" onclick="openTrain('${t.num}')">
+      <div class="tc-top">
+        <span class="tc-tag ${tagClass(t.type)}">${t.tag}</span>
+        <span class="tc-num mono">#${t.num}</span>
+      </div>
+      <div class="tc-name">${t.name}</div>
+      <div class="tc-route"><b>${t.from}</b> ${t.fromName} <span class="tc-arrow">→</span> <b>${t.to}</b> ${t.toName}</div>
+      <div class="tc-bottom">
+        <span class="status-pill ${late?'pill-late':'pill-ontime'}">${late? '+'+t.live.delayMin+'m late' : 'On time'}</span>
+        <span class="fare-mini">from <b>₹${t.baseFare[cheapestClass]}</b></span>
+      </div>
+    </div>`;
+  }).join('') || `<div style="padding:30px 4px;text-align:center;color:var(--muted-2);font-size:13px;">No trains match “${q}”.</div>`;
+
+  const busiest = [...TRAINS].sort((a,b)=>b.live.congestion-a.live.congestion).slice(0,3);
+  document.getElementById('congestionList').innerHTML = busiest.map(t=>{
+    const color = t.live.congestion>70 ? 'var(--alert)' : t.live.congestion>45 ? 'var(--signal)' : 'var(--live)';
+    return `<div class="congestion-card">
+      <div class="cg-top"><b>${t.fromName} → ${t.toName}</b><span class="mono" style="color:${color}">${t.live.congestion}%</span></div>
+      <div class="cg-track"><div class="cg-fill" style="width:${t.live.congestion}%; background:${color};"></div></div>
+      <div class="cg-meta"><span>#${t.num} · ${t.tag}</span><span>${t.live.congestion>70?'Heavy traffic':t.live.congestion>45?'Moderate':'Light'}</span></div>
+    </div>`;
+  }).join('');
+}
+renderSearch();
+
+function openTrain(num){
+  currentTrain = TRAINS.find(t=>t.num===num);
+  go('live');
+}
+
+/* ================= LIVE PAGE ================= */
+let animFrame;
+function renderLive(){
+  const t = currentTrain, L = t.live;
+  document.getElementById('liveTag').className = 'tc-tag ' + tagClass(t.type);
+  document.getElementById('liveTag').textContent = t.tag;
+  document.getElementById('liveName').textContent = t.name + ' · #' + t.num;
+  document.getElementById('liveRoute').innerHTML = `<b>${t.from}</b> ${t.fromName} → <b>${t.to}</b> ${t.toName} · ${t.dist} km`;
+  document.getElementById('liveDays').textContent = t.days;
+  document.getElementById('maxSpeed').textContent = t.maxSpeed;
+  document.getElementById('mapOrigin').textContent = t.from;
+  document.getElementById('mapDest').textContent = t.to;
+  document.getElementById('blockSection').textContent = L.block;
+  document.getElementById('distNext').textContent = L.aheadGap + ' km';
+  document.getElementById('wxIcon').textContent = L.weather;
+  document.getElementById('wxDesc').textContent = L.weatherDesc;
+  document.getElementById('wxHum').textContent = L.humidity + '%';
+  document.getElementById('wxRain').textContent = L.rain + '%';
+
+  const late = L.delayMin > 5;
+  const pill = document.getElementById('liveStatusPill');
+  pill.className = 'status-pill ' + (late?'pill-late':'pill-ontime');
+  pill.textContent = late ? `+${L.delayMin}m delayed` : 'On time';
+  const delayEl = document.getElementById('delayVal');
+  delayEl.textContent = late ? `+${L.delayMin} min` : 'On time';
+  delayEl.style.color = late ? 'var(--alert)' : 'var(--live)';
+
+  document.getElementById('diagText').textContent = late
+    ? `Detected congestion in ${L.block}. Recovery margin available in downstream sections — projected to cut delay before terminal arrival.`
+    : `Train running on schedule with optimal block headway. High probability of on-time destination arrival.`;
+  document.getElementById('slackChip').textContent = late ? `${Math.max(2, 25-L.delayMin)}m recoverable slack` : '+18m slack recovery';
+
+  // gauge
+  const pct = L.speed / t.maxSpeed;
+  const arcLen = 157;
+  document.getElementById('speedArc').style.strokeDashoffset = arcLen - arcLen*pct;
+  document.getElementById('speedVal').textContent = L.speed;
+
+  // track map
+  const x1=15, x2=385;
+  const curX = x1 + (x2-x1)*L.progress;
+  document.getElementById('progressLine').setAttribute('x2', curX);
+  document.getElementById('trainMarker').setAttribute('transform', `translate(${curX},40)`);
+  document.getElementById('tmPct').textContent = Math.round(L.progress*100) + '%';
+
+  // coaches
+  const layout = ['ENG','H1','A1','B1','B2','B3','S1','S2','S3','S4','PC'];
+  document.getElementById('coachRow').innerHTML = layout.map(c=>{
+    const cur = c==='ENG';
+    return `<div class="coach ${c==='ENG'?'eng':(c[0]==='A'||c[0]==='B')?'ac':''}">${c}</div>`;
+  }).join('');
+
+  // upcoming stations (synthetic, scaled to distance/progress)
+  const names = ["Jn Central","Riverside","Cantt Junction","Mid Point","East Yard","Hill Cutting","City Outer",t.toName];
+  const n = names.length;
+  document.getElementById('stationsTable').innerHTML = names.map((nm,i)=>{
+    const frac = i/(n-1);
+    const passed = frac < L.progress - 0.03;
+    const cur = Math.abs(frac - L.progress) < 0.08;
+    const etaMin = Math.round((frac - L.progress) * (t.dist/ (L.speed||80)) * 60);
+    return `<div class="st-row ${passed?'passed':''} ${cur?'current':''}">
+      <span class="st-dot"></span>
+      <span class="st-name">${nm}</span>
+      <span class="st-eta">${passed? 'Passed' : cur ? 'Approaching' : (etaMin>0? etaMin+' min':'—')}</span>
+    </div>`;
+  }).join('');
+}
+
+/* subtle live jitter so numbers feel "live" */
+setInterval(()=>{
+  if(currentPage!=='live') return;
+  const L = currentTrain.live;
+  L.speed = Math.max(20, Math.min(currentTrain.maxSpeed, L.speed + (Math.random()*6-3)|0));
+  L.progress = Math.min(0.98, L.progress + 0.0009);
+  L.aheadGap = Math.max(0.4, (L.aheadGap - 0.03)).toFixed(1);
+  renderLive();
+}, 2200);
+
+/* refresh real weather every 45s while viewing the live page */
+setInterval(()=>{ if(currentPage==='live') loadLiveWeather(currentTrain); }, 45000);
+
+/* ================= SCHEDULE PAGE ================= */
+function renderSchedule(){
+  document.getElementById('scheduleList').innerHTML = TRAINS.map(t=>`
+    <div class="sched-card">
+      <div class="tc-top" style="margin-bottom:10px;">
+        <span class="tc-tag ${tagClass(t.type)}">${t.tag}</span>
+        <span class="tc-num mono">#${t.num}</span>
+      </div>
+      <div class="tc-name" style="margin-bottom:12px;">${t.name}</div>
+      <div class="sched-top">
+        <div class="sched-time"><div class="t">${t.dep}</div><div class="s">${t.from}</div></div>
+        <div class="sched-mid">
+          <div class="sched-dur">${t.dist} km</div>
+          <div class="sched-line"></div>
+        </div>
+        <div class="sched-time"><div class="t">${t.arr}</div><div class="s">${t.to}</div></div>
+      </div>
+      <div class="sched-days"><span>${t.days}</span><span onclick="openTrain('${t.num}')" style="color:var(--signal); cursor:pointer;">Track live →</span></div>
+    </div>
+  `).join('');
+}
+
+/* ================= FARE PAGE ================= */
+function renderFare(){
+  const sel = document.getElementById('fareTrainSelect');
+  sel.innerHTML = TRAINS.map(t=>`<option value="${t.num}">#${t.num} · ${t.name}</option>`).join('');
+  sel.value = currentTrain.num;
+  selectedClass = Object.keys(currentTrain.baseFare)[0];
+  updateFare();
+}
+function updateFare(){
+  const num = document.getElementById('fareTrainSelect').value;
+  const t = TRAINS.find(x=>x.num===num);
+  currentTrain = t;
+  const classes = Object.keys(t.baseFare);
+  if(!classes.includes(selectedClass)) selectedClass = classes[0];
+  const fullNames = { SL:'Sleeper', '3A':'AC 3-Tier', '2A':'AC 2-Tier', '1A':'AC First', CC:'Chair Car', EC:'Exec Chair' };
+  document.getElementById('classGrid').innerHTML = classes.map(c=>`
+    <div class="class-opt ${c===selectedClass?'sel':''}" onclick="pickClass('${c}')">
+      ${c}<b>₹${t.baseFare[c]}</b>
+    </div>
+  `).join('');
+  computeFare();
+}
+function pickClass(c){ selectedClass = c; updateFare(); }
+function changePax(d){ paxCount = Math.max(1, Math.min(6, paxCount+d)); document.getElementById('paxCount').textContent = paxCount; computeFare(); }
+function computeFare(){
+  const t = currentTrain;
+  const base = t.baseFare[selectedClass];
+  const total = base * paxCount;
+  document.getElementById('fareAmt').textContent = '₹' + total.toLocaleString('en-IN');
+  document.getElementById('fareBrk').textContent = `₹${base} × ${paxCount} passenger${paxCount>1?'s':''} · ${selectedClass} class`;
+}
+
+/* init */
+renderLive();
+</script>
+</body>
+</html>
