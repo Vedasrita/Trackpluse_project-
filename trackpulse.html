@@ -68,7 +68,6 @@
 
   /* header */
   .topbar{
-    position: sticky; top:0; z-index: 40;
     background: linear-gradient(180deg, #0C0D11 70%, #0C0D11cc);
     backdrop-filter: blur(10px);
     padding: 18px 18px 12px;
@@ -203,6 +202,556 @@
       #10130f;
     backdrop-filter: blur(18px);
   }
+
+  /* Responsive Dashboard - Desktop */
+
+  body {
+    position: relative;
+  }
+
+  .shell {
+    height: auto !important;
+    min-height: 100vh;
+    overflow: visible !important;
+    align-items: start;
+  }
+
+  .app-main {
+    height: auto !important;
+    min-height: 100vh;
+    overflow: visible !important;
+  }
+
+  .bottomnav {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .sidebar {
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    align-self: start;
+  }
+
+.sidebar {
+  display: none;
+}
+
+@media (min-width: 900px) {
+
+  html, body {
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 65% 0%, #FF7A000d, transparent 35%),
+      var(--bg);
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 1600px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    border: none;
+  }
+
+  /* Sidebar */
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 30px 18px 22px;
+    background: #101116;
+    border-right: 1px solid var(--line);
+  }
+
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 8px 35px;
+  }
+
+  .sidebar-brand .brand-name {
+    font-size: 19px;
+  }
+
+  .sidebar-label {
+    padding: 0 12px;
+    margin-bottom: 12px;
+    color: var(--muted-2);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .14em;
+  }
+
+  .side-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .side-nav .nav-btn {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 13px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 13px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    transition: .2s;
+  }
+
+  .side-nav .nav-btn span {
+    width: 22px;
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .side-nav .nav-btn:hover {
+    background: var(--panel-2);
+    color: var(--text);
+  }
+
+  .side-nav .nav-btn.active {
+    background: var(--signal-dim);
+    color: var(--signal);
+    box-shadow: inset 3px 0 var(--signal);
+  }
+
+  .side-nav .nav-btn.active svg {
+    filter: none;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 15px 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    color: var(--live);
+    font-size: 11px;
+  }
+
+  .sidebar-footer .dot-blink {
+    display: inline-block;
+    margin-right: 7px;
+  }
+
+  .sidebar-version {
+    margin-top: 10px;
+    color: var(--muted-2);
+    font-size: 8px;
+    letter-spacing: .1em;
+  }
+
+  /* Main content */
+
+  .app-main {
+    min-width: 0;
+    min-height: 100vh;
+    padding-bottom: 35px;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    padding: 18px 36px 12px;
+    background: #0C0D11ed;
+    backdrop-filter: blur(18px);
+  }
+
+  .brand {
+    justify-content: flex-end;
+  }
+
+  .brand-left {
+    display: none;
+  }
+
+  .waveform {
+    max-width: 100%;
+    height: 36px;
+    margin-top: 8px;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 36px;
+  }
+
+  .page.active {
+    display: block;
+  }
+
+  /* Search dashboard */
+
+  .hero-front {
+    margin: 24px 0 0;
+    min-height: 190px;
+    padding: 30px 45px;
+    border-radius: 26px;
+  }
+
+  .hero-train-logo {
+    width: 190px;
+  }
+
+  .hero-clock {
+    font-size: 42px;
+  }
+
+  .hero-date {
+    font-size: 14px;
+  }
+
+  .search-wrap {
+    padding: 26px 0 4px;
+  }
+
+  .search-bar {
+    max-width: 700px;
+    padding: 16px 18px;
+  }
+
+  .search-bar input {
+    font-size: 15px;
+  }
+
+  .chip-row {
+    padding: 14px 0 5px;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .section-title {
+    padding: 30px 0 14px;
+  }
+
+  .section-title h2 {
+    font-size: 12px;
+  }
+
+  #congestionList {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .congestion-card {
+    margin: 0;
+    padding: 18px;
+  }
+
+  #searchResults {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .list {
+    padding: 0;
+  }
+
+  .train-card {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .train-card:hover,
+  .sched-card:hover {
+    border-color: #FF7A0066;
+    transform: translateY(-3px);
+  }
+
+  .tc-name {
+    font-size: 18px;
+  }
+
+  /* Live tracking dashboard */
+
+  #page-live.active {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
+    grid-template-areas:
+      "hero diag"
+      "map weather-source"
+      "map weather"
+      "coaches stations";
+    align-items: start;
+    column-gap: 22px;
+    row-gap: 0;
+  }
+
+  #page-live > .hero-card {
+    grid-area: hero;
+    margin: 24px 0 16px;
+    min-height: 260px;
+    padding: 25px;
+  }
+
+  #page-live > .track-map {
+    grid-area: map;
+    margin: 0 0 18px;
+    padding: 22px;
+  }
+
+  #page-live > .diag-card {
+    grid-area: diag;
+    margin: 24px 0 16px;
+    min-height: 160px;
+    padding: 20px;
+  }
+
+  #page-live > .weather-source {
+    grid-area: weather-source;
+    margin: 0 0 8px;
+  }
+
+  #page-live > .weather-row {
+    grid-area: weather;
+    margin: 0 0 18px;
+    gap: 8px;
+  }
+
+  #page-live > .section-title:nth-of-type(1) {
+    grid-area: coaches;
+    padding: 14px 0 12px;
+  }
+
+  #page-live > .coach-row {
+    grid-area: coaches;
+    align-self: end;
+    margin-top: 48px;
+    padding: 0 0 20px;
+    overflow-x: auto;
+  }
+
+  #page-live > .section-title:nth-of-type(2) {
+    grid-area: stations;
+    padding: 14px 0 12px;
+  }
+
+  #page-live > .stations-table {
+    grid-area: stations;
+    margin: 48px 0 20px;
+  }
+
+  .gauge {
+    width: 135px;
+    height: 85px;
+  }
+
+  .gauge-row {
+    gap: 24px;
+    margin-top: 25px;
+  }
+
+  .track-svg {
+    height: 120px;
+  }
+
+  /* Schedule */
+
+  #scheduleList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    padding-bottom: 25px;
+  }
+
+  .sched-card {
+    margin: 0;
+    padding: 22px;
+    transition: .2s;
+  }
+
+  /* Fare estimator */
+
+  .fare-form {
+    max-width: 760px;
+    margin: 10px auto 0;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+  }
+
+  .fare-result {
+    grid-column: 1 / -1;
+    padding: 25px;
+  }
+
+  .fare-result .amt {
+    font-size: 46px;
+  }
+
+  /* Hide mobile navigation */
+
+  .bottomnav {
+    display: none;
+  }
+}
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (min-width: 768px) and (max-width: 899px) {
+
+  .shell {
+    max-width: 100%;
+    border: none;
+    padding-bottom: 30px;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  .hero-front {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .search-wrap {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .chip-row {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  #congestionList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .congestion-card {
+    margin: 0;
+  }
+
+  #searchResults,
+  #scheduleList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .list {
+    padding: 0;
+  }
+
+  .bottomnav {
+    max-width: 100%;
+  }
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 767px) {
+
+  .shell {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 88px;
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .app-main {
+    min-width: 0;
+  }
+
+  .page {
+    padding: 0;
+  }
+
+  .page.active {
+    display: block;
+  }
+
+  .bottomnav {
+    display: flex;
+  }
+
+  .topbar {
+    padding: 18px 18px 12px;
+  }
+
+  .hero-front {
+    margin: 14px 18px 0;
+  }
+
+  .search-wrap {
+    padding: 16px 18px 4px;
+  }
+
+  .chip-row {
+    padding: 12px 18px 2px;
+    flex-wrap: nowrap;
+  }
+
+  .section-title {
+    padding: 22px 18px 10px;
+  }
+
+  .list {
+    padding: 0 18px;
+  }
+
+  #congestionList {
+    display: block;
+  }
+
+  .congestion-card {
+    margin: 0 18px 10px;
+  }
+
+  #searchResults,
+  #scheduleList {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #page-live.active {
+    display: block;
+  }
+
+  .fare-form {
+    padding: 4px 18px 0;
+  }
+}
   .hero-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; position:relative; z-index:1; }
   .hero-route{ font-size: 12.5px; color:var(--muted); margin-top:2px; }
   .hero-route b{ color:var(--text); }
@@ -320,11 +869,100 @@
   .nav-btn.active svg{ filter: drop-shadow(0 0 6px #FF7A0077); }
 
   ::-webkit-scrollbar{ width:0; height:0; }
+  /* ===== FINAL DESKTOP LAYOUT FIX ===== */
+
+@media screen and (min-width: 900px) {
+
+  html {
+    min-height: 100%;
+    overflow-y: auto;
+  }
+
+  body {
+    min-height: 100vh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: visible;
+    overscroll-behavior: auto;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    width: 100%;
+    max-width: 1600px;
+    min-height: 100vh;
+    height: auto;
+    overflow: visible;
+    padding-bottom: 0;
+    align-items: start;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    align-self: start;
+  }
+
+  .app-main {
+    min-width: 0;
+    min-height: 100vh;
+    height: auto;
+    overflow: visible;
+  }
+
+  .bottomnav {
+    display: none;
+  }
+}
 </style>
 </head>
 <body>
 <div class="shell">
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M4 15V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3Z"
+          stroke="#0C0D11" stroke-width="2"/>
+        <path d="M4 18l-2 3M20 18l2 3M8 21h8"
+          stroke="#0C0D11" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="8" cy="15" r="1.2" fill="#0C0D11"/>
+        <circle cx="16" cy="15" r="1.2" fill="#0C0D11"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name display">TrackPulse</div>
+      <div class="brand-sub">Rail intelligence</div>
+    </div>
+  </div>
 
+  <div class="sidebar-label">WORKSPACE</div>
+
+  <nav class="side-nav">
+    <button class="nav-btn active" data-p="search" onclick="go('search')">
+      <span>⌕</span> Overview
+    </button>
+    <button class="nav-btn" data-p="live" onclick="go('live')">
+      <span>◉</span> Live tracking
+    </button>
+    <button class="nav-btn" data-p="schedule" onclick="go('schedule')">
+      <span>▦</span> Schedules
+    </button>
+    <button class="nav-btn" data-p="fare" onclick="go('fare')">
+      <span>₹</span> Fare estimator
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <span class="dot-blink"></span>
+    All systems operational
+    <div class="sidebar-version">TRACKPULSE · LIVE INTELLIGENCE</div>
+  </div>
+</aside>
+
+<main class="app-main">
   <div class="topbar">
     <div class="brand">
       <div class="brand-left">
@@ -385,14 +1023,20 @@
       <div class="hero-clock-wrap">
         <div class="hero-clock mono" id="heroClock">00:00:00</div>
         <div class="hero-date" id="heroDate">—</div>
-        <div class="hero-tz">IST · India Standard Time</div>
+        <div class="hero-tz">IST · Indian Standard Time</div>
       </div>
     </div>
 
     <div class="search-wrap">
       <div class="search-bar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input id="searchInput" placeholder="Search train number or name — e.g. 22436, Rajdhani" oninput="renderSearch()">
+        <label for="searchInput">Search Trains</label>
+<input
+  id="searchInput"
+  type="text"
+  placeholder="Search train number or name — e.g. 22436, Rajdhani"
+  oninput="renderSearch()"
+>
       </div>
     </div>
     <div class="chip-row" id="chipRow"></div>
@@ -483,8 +1127,8 @@
     <div class="section-title" style="padding-top:16px;"><h2>Fare estimator</h2></div>
     <div class="fare-form">
       <div class="field">
-        <label>Train</label>
-        <select class="select-box" id="fareTrainSelect" onchange="updateFare()"></select>
+       <label for="fareTrainSelect">Train</label>
+<select class="select-box" id="fareTrainSelect" onchange="updateFare()"></select>
       </div>
       <div class="field">
         <label>Class</label>
